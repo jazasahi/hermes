@@ -1,82 +1,36 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import streamlit as st
 
-export default function PriorAuthTool() {
-  const [drugName, setDrugName] = useState("");
-  const [plan, setPlan] = useState("");
-  const [result, setResult] = useState(null);
+st.set_page_config(page_title="Prior Authorization Checker", layout="centered")
 
-  const handleSubmit = () => {
-    // Simulated response logic
-    if (drugName.toLowerCase() === "ozempic" && plan === "md_medicaid") {
-      setResult({
-        paRequired: true,
-        notes: "Step therapy required. Must try metformin first.",
-        formLink: "https://example.com/md_form.pdf",
-        alternatives: ["Metformin", "Rybelsus"]
-      });
-    } else {
-      setResult({
-        paRequired: false,
-        notes: "No prior authorization required.",
-        alternatives: []
-      });
-    }
-  };
+st.title("🩺 Prior Authorization Checker")
 
-  return (
-    <div className="max-w-xl mx-auto mt-10 space-y-6">
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <h2 className="text-xl font-semibold">Prior Authorization Checker</h2>
+drug_name = st.text_input("Enter Drug Name", placeholder="e.g., Ozempic")
 
-          <Input
-            placeholder="Enter drug name (e.g., Ozempic)"
-            value={drugName}
-            onChange={(e) => setDrugName(e.target.value)}
-          />
+plan = st.selectbox("Select Insurance Plan", ["", "Maryland Medicaid", "DC Medicaid", "California Medicaid"])
 
-          <Select onValueChange={(val) => setPlan(val)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Insurance Plan" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="md_medicaid">Maryland Medicaid</SelectItem>
-              <SelectItem value="dc_medicaid">DC Medicaid</SelectItem>
-              <SelectItem value="ca_medicaid">California Medicaid</SelectItem>
-            </SelectContent>
-          </Select>
+submit = st.button("Check PA Status")
 
-          <Button onClick={handleSubmit}>Check PA Status</Button>
+if submit and drug_name and plan:
+    drug = drug_name.strip().lower()
+    plan_key = plan.lower().replace(" ", "_")
 
-          {result && (
-            <div className="mt-6 space-y-2">
-              <p className="font-medium">
-                PA Required: {result.paRequired ? "Yes" : "No"}
-              </p>
-              <p>{result.notes}</p>
-              {result.paRequired && result.formLink && (
-                <a
-                  href={result.formLink}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Download PA Form
-                </a>
-              )}
-              {result.alternatives.length > 0 && (
-                <p>
-                  <span className="font-medium">Covered Alternatives:</span> {result.alternatives.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+    if drug == "ozempic" and plan_key == "maryland_medicaid":
+        pa_required = True
+        notes = "Step therapy required. Must try metformin first."
+        form_link = "https://example.com/md_form.pdf"
+        alternatives = ["Metformin", "Rybelsus"]
+    else:
+        pa_required = False
+        notes = "No prior authorization required."
+        form_link = None
+        alternatives = []
+
+    st.subheader("📝 PA Results")
+    st.markdown(f"**PA Required:** {'✅ Yes' if pa_required else '❌ No'}")
+    st.markdown(f"**Notes:** {notes}")
+
+    if pa_required and form_link:
+        st.markdown(f"[📄 Download PA Form]({form_link})")
+
+    if alternatives:
+        st.markdown(f"**Covered Alternatives:** {', '.join(alternatives)}")
